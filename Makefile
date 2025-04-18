@@ -14,7 +14,7 @@ CPP_INCLUDES := -I$(CUDA_PATH)/include
 CPP_LIBS := -L$(CUDA_PATH)/lib -lcuda
 
 # Default build
-all: $(PTX_TARGET) $(CPP_TARGET)
+all: $(PTX_TARGET) $(CPP_TARGET) extract
 
 # Compile .cu to .ptx
 $(PTX_TARGET): $(CU_SRC)
@@ -24,5 +24,11 @@ $(PTX_TARGET): $(CU_SRC)
 $(CPP_TARGET): $(CPP_SRC)
 	g++ $< -o $@ $(CPP_INCLUDES) $(CPP_LIBS)
 
+
+
+extract:
+	tar -xvjf images.tar.bz2
+
 clean:
 	rm -f $(PTX_TARGET) $(CPP_TARGET)
+

@@ -9,10 +9,6 @@ images/
 *.pgm
 *.raw
 
-# Ignore compressed archives
-*.tar.bz2
-*.zip
-*.tar.gz
 
 # Ignore backup or temp files
 *~

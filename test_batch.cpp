@@ -1,7 +1,14 @@
 #include <cuda.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
-#include <cstdlib>
+#include <string>
+#include <random>
+#include <algorithm>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "common.h"
 
 
@@ -23,6 +30,53 @@ typedef unsigned char uchar;
 // Image parameters
 #define IMG_SIZE (IMG_DIMENSION * IMG_DIMENSION)
 const uint64_t batch_size = 8;
+
+
+std::vector<uchar> load_dat_image(const std::string& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) throw std::runtime_error("Failed to open: " + path);
+
+    std::vector<uchar> buffer(IMG_SIZE);
+    file.read(reinterpret_cast<char*>(buffer.data()), IMG_SIZE);
+    if (file.gcount() != IMG_SIZE)
+        throw std::runtime_error("Incorrect image size in: " + path);
+    return buffer;
+}
+
+std::vector<std::string> get_all_valid_dat_images(const std::string& folder) {
+    std::vector<std::string> paths;
+    DIR* dir = opendir(folder.c_str());
+    if (!dir) {
+        perror("opendir failed");
+        return paths;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        std::string name = entry->d_name;
+        if (name.size() > 4 && name.substr(name.size() - 4) == ".dat") {
+            std::string full_path = folder + "/" + name;
+            struct stat st;
+            if (stat(full_path.c_str(), &st) == 0 && st.st_size == IMG_SIZE) {
+                paths.push_back(full_path);
+            }
+        }
+    }
+
+    closedir(dir);
+    return paths;
+}
+
+std::vector<std::string> select_random_images(const std::vector<std::string>& all, size_t count) {
+    if (count > all.size()) throw std::runtime_error("Not enough images to sample from.");
+
+    std::vector<std::string> shuffled = all;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(shuffled.begin(), shuffled.end(), g);
+
+    return std::vector<std::string>(shuffled.begin(), shuffled.begin() + count);
+}
 
 
 // Generate `batch_size` fake grayscale images
@@ -73,8 +127,18 @@ void init_gpu_face_verfication(CUmodule module, uchar* images, uint64_t batch_si
 
 
 int main() {
+
+    std::vector<std::string> all_images = get_all_valid_dat_images("images");
+    std::vector<std::string> selected_refs = select_random_images(all_images, batch_size);
+
+    std::vector<uchar> reference_images;
+    for (const auto& path : selected_refs) {
+        auto img = load_dat_image(path);
+        reference_images.insert(reference_images.end(), img.begin(), img.end());
+    }
+
     // === Step 1: Generate fake reference faces (gallery) ===
-    std::vector<uchar> reference_images = generate_reference_images(batch_size);
+    // std::vector<uchar> reference_images = generate_reference_images(batch_size);
 
     // === Step 2: Initialize CUDA driver API ===
     CHECK_CUDA(cuInit(0));
@@ -99,7 +163,7 @@ int main() {
     std::vector<double> h_total_dis(batch_size);
 
     for (auto& px : h_imges) px = rand() % 256;
-    
+
     for (int i = 0; i < batch_size; ++i)
         h_idxes[i] = i;  // Compare image[i] to hist_dataset[i]
 
