@@ -59,45 +59,6 @@ double static inline get_time_usec(void) {
 	return t.tv_sec * 1e6L + t.tv_nsec * 1e-3;
 }
 
-//request & response
-///*****************************************************************
-// ******************************************************************/
-class Request{
-	private:
-		size_t sz;
-	public:
-		Request(size_t _sz){
-			sz=_sz;
-			func_args=(uchar**)malloc(sizeof(uchar*)*sz);
-		}
-		Request(){
-			sz=0;
-		}
-		~Request(){
-			//free(func_args);
-		}
-		uint64_t req_id; 	
-		uint64_t slice_id;
-		req_opcode opcode;
-		//TODO call function
-		func_opcode function_id; 
-		//char* func_args[2];
-		int num;
-		uchar *images1;
-		uchar *images2;
-		uchar** func_args;
-};
-
-struct Response{
-	uint64_t status_header;
-	uint64_t req_id;
-	uint64_t slice_id;
-	//retured by register function
-	uint64_t function_id;
-	char* func_result;
-	int num;
-	double distance;
-};
 //memory
 ///*****************************************************************
 // ******************************************************************/
@@ -105,66 +66,7 @@ struct memory{
 	char* base_addr; //from shared memory
 	size_t size;
 };
-//slice
-///*****************************************************************
-// ******************************************************************/
-/*class slice{
-	public:
-		uint64_t slice_id;
-		mode_opcode mode;
-		cudaStream_t copyStream;
-		queue_pairs* qp;
-
-		std::vector<unsigned char*>* mems;
-		std::map<uint64_t, uint64_t>* funcs;
-
-		slice(uint64_t _slice_id,mode_opcode _mode){
-			slice_id=_slice_id;
-			mode=_mode;
-
-			qp=new queue_pairs(NULL,
-					SLOTSNUM,
-					NULL,
-					NULL,
-					send_q_type,
-					NULL, //TODO response
-					SLOTSNUM,
-					NULL,
-					NULL,
-					recv_q_type);
-
-			mems=new std::vector<unsigned char*>();
-			funcs=new std::map<uint64_t, uint64_t>();
-		};
-		~slice(){
-			mems->clear();
-			//delete qp;	
-			delete mems;
-			delete funcs;
-		}
-		int enqueue_resp(int _block_id,Request new_request,double* req_t_end,double* total_distance){
 
 
-		}
-		void push(Request req,int block_id){
-			Queue<Request>* request_q_host=&(qp->send_q[block_id]);
-			request_q_host->enqueue(req);
-			qp->reqNum[block_id]++;
-
-		}
-		Response poll(int block_id,double* req_t_end,double* total_distance){
-			Queue<Response>* response_q_host=&qp->recv_q[block_id];
-			Response cur_response  =response_q_host->dequeue();
-			req_t_end[cur_response.num] = get_time_usec();
-			*total_distance += cur_response.distance;
-			qp->respNum[block_id]++;
-			return cur_response;
-
-		}
-		void service_end(){
-			qp->end_connection();
-		}
-
-};*/
 #endif /*COMMON_H_*/
 
