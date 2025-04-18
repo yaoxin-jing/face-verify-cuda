@@ -1,0 +1,23 @@
+# Ignore compiled binaries
+run_ptx
+*.o
+*.ptx
+
+# Ignore all extracted and raw images
+images/
+*.dat
+*.pgm
+*.raw
+
+# Ignore compressed archives
+*.tar.bz2
+*.zip
+*.tar.gz
+
+# Ignore backup or temp files
+*~
+*.swp
+.DS_Store
+
+# Ignore output logs
+*.log
